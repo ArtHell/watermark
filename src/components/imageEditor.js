@@ -3,24 +3,38 @@ import { ImageSettings } from "./imageSettings";
 import { UploadButtons } from "./uploadButtons";
 import { useForm } from "react-hook-form";
 import { useCanvas } from "../hooks/useCanvas";
-import { debounce, get } from "lodash";
+import { debounce, get, set } from "lodash";
 import { useUserSettings } from "../hooks/useUserSettings";
+import { useMemo } from "react";
 
 export const ImageEditor = () => {
   const [userSettings, saveSettings] = useUserSettings();
-  
+
+  const defaultSettings = useMemo(() => ({
+    image: '',
+    watermark: '',
+    watermarkCorner: 'bottom-right',
+    watermarkXOffset: 32,
+    watermarkYOffset: 32,
+    watermarkScale: 50,
+    watermarkOpacity: 100,
+  }), []);
+
   const { register, setValue, handleSubmit, getValues, watch } = useForm({
     defaultValues: {
-      image: '',
-      watermark: '',
-      watermarkCorner: 'bottom-right',
-      watermarkXOffset: 32,
-      watermarkYOffset: 32,
-      watermarkScale: 50,
-      watermarkOpacity: 100,
+      ...defaultSettings,
       ...userSettings,
     }
   });
+
+  const setDefaultSettings = useCallback(() => {
+      setValue('watermarkCorner', defaultSettings.watermarkCorner);
+      setValue('watermarkXOffset', defaultSettings.watermarkXOffset);
+      setValue('watermarkYOffset', defaultSettings.watermarkYOffset);
+      setValue('watermarkScale', defaultSettings.watermarkScale);
+      setValue('watermarkOpacity', defaultSettings.watermarkOpacity);
+  }, [defaultSettings, setValue]);
+
   const [canvasWidth, setCanvasWidth] = useState(300);
   const [canvasHeight, setCanvasHeight] = useState(300);
   const [imageFileName, setImageFileName] = useState('image');
@@ -38,37 +52,37 @@ export const ImageEditor = () => {
     switch (watermarkCorner) {
       case 'top-left': {
         ctx.drawImage(
-          watermarkImg, 
-          watermarkXOffset, 
-          watermarkYOffset, 
-          watermarkImg.width * watermarkScale, 
+          watermarkImg,
+          watermarkXOffset,
+          watermarkYOffset,
+          watermarkImg.width * watermarkScale,
           watermarkImg.height * watermarkScale);
         break;
       }
       case 'top-right': {
         ctx.drawImage(
-          watermarkImg, 
-          img.width - watermarkImg.width * watermarkScale - watermarkXOffset, 
-          watermarkYOffset, 
-          watermarkImg.width * watermarkScale, 
+          watermarkImg,
+          img.width - watermarkImg.width * watermarkScale - watermarkXOffset,
+          watermarkYOffset,
+          watermarkImg.width * watermarkScale,
           watermarkImg.height * watermarkScale);
         break;
       }
       case 'bottom-left': {
         ctx.drawImage(
-          watermarkImg, 
-          watermarkXOffset, 
-          img.height - watermarkImg.height * watermarkScale - watermarkYOffset, 
-          watermarkImg.width * watermarkScale, 
+          watermarkImg,
+          watermarkXOffset,
+          img.height - watermarkImg.height * watermarkScale - watermarkYOffset,
+          watermarkImg.width * watermarkScale,
           watermarkImg.height * watermarkScale);
         break;
       }
       case 'bottom-right': {
         ctx.drawImage(
-          watermarkImg, 
-          img.width - watermarkImg.width * watermarkScale - watermarkXOffset, 
-          img.height - watermarkImg.height * watermarkScale - watermarkYOffset, 
-          watermarkImg.width * watermarkScale, 
+          watermarkImg,
+          img.width - watermarkImg.width * watermarkScale - watermarkXOffset,
+          img.height - watermarkImg.height * watermarkScale - watermarkYOffset,
+          watermarkImg.width * watermarkScale,
           watermarkImg.height * watermarkScale);
         break;
       }
@@ -98,7 +112,7 @@ export const ImageEditor = () => {
     }
   }, [getValues, canvasRef, drawWatermark]);
 
-  const debouncedDraw = useCallback(debounce(drawImage, 300, {leading: false}), []);
+  const debouncedDraw = useCallback(debounce(drawImage, 300, { leading: false }), []);
 
   useEffect(() => {
     debouncedDraw();
@@ -138,12 +152,12 @@ export const ImageEditor = () => {
 
   return (
     <form className="flex flex-col items-center my-8">
-      <UploadButtons imageField={imageField} watermarkField={watermarkField} setImage={(value, fileName) => {setValue('image', value);  setImageFileName(fileName);}} setWatermark={value => setValue('watermark', value)} />
+      <UploadButtons imageField={imageField} watermarkField={watermarkField} setImage={(value, fileName) => { setValue('image', value); setImageFileName(fileName); }} setWatermark={value => setValue('watermark', value)} />
       <label className="block font-bold mb-2">{'Предпросмотр. Есть горизонтальная прокрутка'}</label>
       <div className="border border-black border-dashed overflow-x-auto w-full">
         <canvas width={canvasWidth} height={canvasHeight} ref={canvasRef} className="m-auto" />
       </div>
-      <ImageSettings getValues={getValues} watermarkCornerField={watermarkCornerField} watermarkOpacityField={watermarkOpacityField} watermarkScaleField={watermarkScaleField} watermarkXOffsetField={watermarkXOffsetField} watermarkYOffsetField={watermarkYOffsetField} />
+      <ImageSettings setDefaultSettings={setDefaultSettings} getValues={getValues} watermarkCornerField={watermarkCornerField} watermarkOpacityField={watermarkOpacityField} watermarkScaleField={watermarkScaleField} watermarkXOffsetField={watermarkXOffsetField} watermarkYOffsetField={watermarkYOffsetField} />
       <button type="button" onClick={downloadImage} className="py-4 px-16 bg-indigo-500 text-white text-sm font-semibold rounded-md shadow focus:outline-none">Скачать</button>
     </form>
   )
