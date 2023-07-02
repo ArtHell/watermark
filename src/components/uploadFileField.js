@@ -30,9 +30,15 @@ export const UploadFileField = ({label, formField, onLoad}) => {
       };
 
       reader.readAsDataURL(file);
+      
 
       reader.onload = () => {
-        onLoad(reader.result);
+        const fileName = event.target.files[0].name.split('.');
+        if(fileName.length > 1){
+          fileName.pop();
+        }
+        
+        onLoad(reader.result, fileName.join(''));
       };
     }
   };

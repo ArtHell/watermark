@@ -19,6 +19,7 @@ export const ImageEditor = () => {
   });
   const [canvasWidth, setCanvasWidth] = useState(300);
   const [canvasHeight, setCanvasHeight] = useState(300);
+  const [imageFileName, setImageFileName] = useState('image');
   const watchAllFields = watch();
 
   const canvasRef = useCanvas(([canvas, ctx]) => { });
@@ -89,7 +90,6 @@ export const ImageEditor = () => {
       watermarkImg.src = getValues('watermark');
       watermarkImg.onload = () => {
         drawWatermark(watermarkImg, img, ctx);
-        console.log('drawn');
       }
     }
   }, [getValues, canvasRef, drawWatermark]);
@@ -113,7 +113,7 @@ export const ImageEditor = () => {
     const canvas = canvasRef.current;
     var url = canvas.toDataURL("image/png");
     var link = document.createElement('a');
-    link.download = 'watermark.png';
+    link.download = `${imageFileName}_wm.png`;
     link.href = url;
     link.click();
   }
@@ -122,7 +122,7 @@ export const ImageEditor = () => {
 
   return (
     <form className="flex flex-col items-center my-8">
-      <UploadButtons imageField={imageField} watermarkField={watermarkField} setImage={value => setValue('image', value)} setWatermark={value => setValue('watermark', value)} />
+      <UploadButtons imageField={imageField} watermarkField={watermarkField} setImage={(value, fileName) => {setValue('image', value);  setImageFileName(fileName);}} setWatermark={value => setValue('watermark', value)} />
       <label className="block font-bold mb-2">{'Предпросмотр. Есть горизонтальная прокрутка'}</label>
       <div className="border border-black border-dashed overflow-x-auto w-full">
         <canvas width={canvasWidth} height={canvasHeight} ref={canvasRef} className="m-auto" />
