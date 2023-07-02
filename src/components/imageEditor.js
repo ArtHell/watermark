@@ -127,7 +127,7 @@ export const ImageEditor = () => {
       <div className="border border-black border-dashed overflow-x-auto w-full">
         <canvas width={canvasWidth} height={canvasHeight} ref={canvasRef} className="m-auto" />
       </div>
-      <ImageSettings watermarkCornerField={watermarkCornerField} watermarkOpacityField={watermarkOpacityField} watermarkScaleField={watermarkScaleField} watermarkXOffsetField={watermarkXOffsetField} watermarkYOffsetField={watermarkYOffsetField} />
+      <ImageSettings getValues={getValues} watermarkCornerField={watermarkCornerField} watermarkOpacityField={watermarkOpacityField} watermarkScaleField={watermarkScaleField} watermarkXOffsetField={watermarkXOffsetField} watermarkYOffsetField={watermarkYOffsetField} />
       <button type="button" onClick={downloadImage} className="py-4 px-16 bg-indigo-500 text-white text-sm font-semibold rounded-md shadow focus:outline-none">Скачать</button>
     </form>
   )

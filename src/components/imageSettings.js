@@ -1,4 +1,4 @@
-export const ImageSettings = ({ watermarkCornerField, watermarkOpacityField, watermarkScaleField, watermarkXOffsetField, watermarkYOffsetField }) => {
+export const ImageSettings = ({ getValues, watermarkCornerField, watermarkOpacityField, watermarkScaleField, watermarkXOffsetField, watermarkYOffsetField }) => {
   return (
     <div className='flex flex-col items-center mt-8 mb-8'>
       <label className="block font-bold mb-2">{'Настройки водяного знака'}</label>
@@ -11,9 +11,9 @@ export const ImageSettings = ({ watermarkCornerField, watermarkOpacityField, wat
             <option value="bottom-left">{'Нижний левый угол'}</option>
             <option value="bottom-right">{'Нижний правый угол'}</option>
           </select>
-          <label className="block font-bold mb-2">{'Непрозрачность (%)'}</label>
+          <label className="block font-bold mb-2">{`Непрозрачность (%) | ${getValues('watermarkOpacity')}`}</label>
           <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="range" {...watermarkOpacityField} />
-          <label className="block font-bold mb-2">{'Масштаб(%)'}</label>
+          <label className="block font-bold mb-2">{`Масштаб(%) | ${getValues('watermarkScale')}`}</label>
           <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="range" min={0} max={200}  {...watermarkScaleField} />
           <label className="block font-bold mb-2">{'Смещение по X (пиксели)'}</label>
           <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="number" {...watermarkXOffsetField} />
