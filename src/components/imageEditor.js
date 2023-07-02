@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { ImageSettings } from "./imageSettings";
 import { UploadButtons } from "./uploadButtons";
 import { useForm } from "react-hook-form";
 import { useCanvas } from "../hooks/useCanvas";
-import { debounce } from "lodash";
+import { debounce, get } from "lodash";
+import { useUserSettings } from "../hooks/useUserSettings";
 
 export const ImageEditor = () => {
+  const [userSettings, saveSettings] = useUserSettings();
+  
   const { register, setValue, handleSubmit, getValues, watch } = useForm({
     defaultValues: {
       image: '',
@@ -15,6 +18,7 @@ export const ImageEditor = () => {
       watermarkYOffset: 32,
       watermarkScale: 50,
       watermarkOpacity: 100,
+      ...userSettings,
     }
   });
   const [canvasWidth, setCanvasWidth] = useState(300);
@@ -108,8 +112,20 @@ export const ImageEditor = () => {
   const watermarkXOffsetField = register("watermarkXOffset", { required: true, validate: value => value >= 0 });
   const watermarkYOffsetField = register("watermarkYOffset", { required: true, validate: value => value >= 0 });
 
+  const saveUserSettings = () => {
+    const settings = {
+      watermarkCorner: getValues('watermarkCorner'),
+      watermarkXOffset: getValues('watermarkXOffset'),
+      watermarkYOffset: getValues('watermarkYOffset'),
+      watermarkScale: getValues('watermarkScale'),
+      watermarkOpacity: getValues('watermarkOpacity'),
+    }
+
+    saveSettings(settings);
+  }
 
   const downloadImage = () => {
+    saveUserSettings();
     const canvas = canvasRef.current;
     var url = canvas.toDataURL("image/png");
     var link = document.createElement('a');
