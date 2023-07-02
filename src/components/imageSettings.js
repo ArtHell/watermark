@@ -14,7 +14,7 @@ export const ImageSettings = ({ watermarkCornerField, watermarkOpacityField, wat
           <label className="block font-bold mb-2">{'Непрозрачность (%)'}</label>
           <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="range" {...watermarkOpacityField} />
           <label className="block font-bold mb-2">{'Масштаб(%)'}</label>
-          <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="range"  {...watermarkScaleField} />
+          <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="range" min={0} max={200}  {...watermarkScaleField} />
           <label className="block font-bold mb-2">{'Смещение по X (пиксели)'}</label>
           <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="number" {...watermarkXOffsetField} />
           <label className="block font-bold mb-2">{'Смещение по Y (пиксели)'}</label>

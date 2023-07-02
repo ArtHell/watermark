@@ -104,7 +104,7 @@ export const ImageEditor = () => {
   const watermarkField = register("watermark", { required: true });
   const watermarkCornerField = register("watermarkCorner", { required: true, validate: value => ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(value) });
   const watermarkOpacityField = register("watermarkOpacity", { required: true, validate: value => value >= 0 && value <= 100 });
-  const watermarkScaleField = register("watermarkScale", { required: true, validate: value => value >= 0 && value <= 100 });
+  const watermarkScaleField = register("watermarkScale", { required: true, validate: value => value >= 0 && value <= 200 });
   const watermarkXOffsetField = register("watermarkXOffset", { required: true, validate: value => value >= 0 });
   const watermarkYOffsetField = register("watermarkYOffset", { required: true, validate: value => value >= 0 });
 
