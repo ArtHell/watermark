@@ -14,12 +14,12 @@ export const ImageEditor = () => {
     image: '',
     watermark: '',
     watermarkCorner: 'bottom-right',
-    watermarkXOffset: 32,
-    watermarkYOffset: 32,
-    watermarkScale: 100,
-    watermarkOpacity: 100,
+    watermarkXOffset: 10,
+    watermarkYOffset: 10,
+    watermarkScale: 30,
+    watermarkOpacity: 30,
     watermarkColor: '#ffffff',
-    watermarkEnableCustomColor: false,
+    watermarkEnableCustomColor: true,
   }), []);
 
   const { register, setValue, handleSubmit, getValues, watch } = useForm({
