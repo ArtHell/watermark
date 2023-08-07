@@ -62,12 +62,14 @@ export const ImageEditor = () => {
     ctx.globalAlpha = watermarkOpacity;
     const width = canvas.width * watermarkScale;
     const height = watermarkImg.height * width / watermarkImg.width;
+    const xOffset = canvas.width * watermarkXOffset / 100;
+    const yOffset = canvas.height * watermarkYOffset / 100;
     switch (watermarkCorner) {
       case 'top-left': {
         ctx.drawImage(
           watermarkImg,
-          watermarkXOffset,
-          watermarkYOffset,
+          xOffset,
+          yOffset,
           width,
           height);
         break;
@@ -75,7 +77,7 @@ export const ImageEditor = () => {
       case 'top-right': {
         ctx.drawImage(
           watermarkImg,
-          canvas.width - width - watermarkXOffset,
+          canvas.width - width - xOffset,
           watermarkYOffset,
           width,
           height);
@@ -85,7 +87,7 @@ export const ImageEditor = () => {
         ctx.drawImage(
           watermarkImg,
           watermarkXOffset,
-          canvas.height - height - watermarkYOffset,
+          canvas.height - height - yOffset,
           width,
           height);
         break;
@@ -93,8 +95,8 @@ export const ImageEditor = () => {
       case 'bottom-right': {
         ctx.drawImage(
           watermarkImg,
-          canvas.width - width - watermarkXOffset,
-          canvas.height - height - watermarkYOffset,
+          canvas.width - width - xOffset,
+          canvas.height - height - yOffset,
           width,
           height);
         break;
@@ -190,7 +192,7 @@ export const ImageEditor = () => {
       <UploadButtons imageField={imageField} watermarkField={watermarkField} setImage={(value, fileName) => { setValue('image', value); setImageFileName(fileName); }} setWatermark={value => setValue('watermark', value)} />
       <label className="block font-bold mb-2">{'Предпросмотр'}</label>
       <canvas hidden width={canvasWidth} height={canvasHeight} ref={canvasRef} className="m-auto" />
-      <div className="border border-black border-dashed overflow-x-auto w-full" id='demoCanvasWrapper'>
+      <div className="rounded shadow overflow-x-auto w-full max-w-lg" id='demoCanvasWrapper'>
         <canvas width={demoCanvasWidth} height={demoCanvasHeight} ref={demoCanvasRef} />
       </div>
       <ImageSettings

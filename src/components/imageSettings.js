@@ -14,18 +14,18 @@ export const ImageSettings = ({ setDefaultSettings, getValues, watermarkCornerFi
             <option value="bottom-left">{'Нижний левый угол'}</option>
             <option value="bottom-right">{'Нижний правый угол'}</option>
           </select>
-          <label className="block font-bold mb-2">{`Непрозрачность (%) | ${getValues('watermarkOpacity')}`}</label>
+          <label className="block font-bold mb-2">{`Непрозрачность ${getValues('watermarkOpacity')}%`}</label>
           <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="range" {...watermarkOpacityField} />
-          <label className="block font-bold mb-2">{`Масштаб(%) | ${getValues('watermarkScale')}`}</label>
-          <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="range" min={0} max={100}  {...watermarkScaleField} />
-          <label className="block font-bold mb-2">{'Смещение по X (пиксели)'}</label>
-          <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="number" {...watermarkXOffsetField} />
-          <label className="block font-bold mb-2">{'Смещение по Y (пиксели)'}</label>
-          <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="number" {...watermarkYOffsetField} />
+          <label className="block font-bold mb-2">{`Масштаб ${getValues('watermarkScale')}%`}</label>
+          <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="range"  {...watermarkScaleField} />
+          <label className="block font-bold mb-2">{`Смещение по горизонтали ${getValues('watermarkXOffset')}%`}</label>
+          <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="range" {...watermarkXOffsetField} />
+          <label className="block font-bold mb-2">{`Смещение по вертикали ${getValues('watermarkYOffset')}%`}</label>
+          <input className="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="range" {...watermarkYOffsetField} />
           <label className="block font-bold mb-2">{'Включить цвет логотипа'}</label>
           <input className="block w-6 h-6 bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 rounded shadow leading-tight focus:outline-none focus:shadow-outline" type="checkbox" {...watermarkEnableCustomColorField} />
           <label className="block font-bold mb-2">{'Цвет логотипа'}</label>
-          <HexColorPicker color={getValues('watermarkColor')} onChange={color => setWatermarkColor(color)} />
+          <HexColorPicker className="!w-full" color={getValues('watermarkColor')} onChange={color => setWatermarkColor(color)} />
         </div>
       </div>
     </div>
