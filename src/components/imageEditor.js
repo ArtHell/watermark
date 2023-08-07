@@ -16,8 +16,10 @@ export const ImageEditor = () => {
     watermarkCorner: 'bottom-right',
     watermarkXOffset: 32,
     watermarkYOffset: 32,
-    watermarkScale: 50,
+    watermarkScale: 100,
     watermarkOpacity: 100,
+    watermarkColor: '#ffffff',
+    watermarkEnableCustomColor: false,
   }), []);
 
   const { register, setValue, handleSubmit, getValues, watch } = useForm({
@@ -28,12 +30,18 @@ export const ImageEditor = () => {
   });
 
   const setDefaultSettings = useCallback(() => {
-      setValue('watermarkCorner', defaultSettings.watermarkCorner);
-      setValue('watermarkXOffset', defaultSettings.watermarkXOffset);
-      setValue('watermarkYOffset', defaultSettings.watermarkYOffset);
-      setValue('watermarkScale', defaultSettings.watermarkScale);
-      setValue('watermarkOpacity', defaultSettings.watermarkOpacity);
+    setValue('watermarkCorner', defaultSettings.watermarkCorner);
+    setValue('watermarkXOffset', defaultSettings.watermarkXOffset);
+    setValue('watermarkYOffset', defaultSettings.watermarkYOffset);
+    setValue('watermarkScale', defaultSettings.watermarkScale);
+    setValue('watermarkOpacity', defaultSettings.watermarkOpacity);
+    setValue('watermarkColor', defaultSettings.watermarkColor);
+    setValue('watermarkEnableCustomColor', defaultSettings.watermarkEnableCustomColor);
   }, [defaultSettings, setValue]);
+
+  const setWatermarkColor = useCallback((color) => {
+    setValue('watermarkColor', color);
+  }, [setValue]);
 
   const [canvasWidth, setCanvasWidth] = useState(300);
   const [canvasHeight, setCanvasHeight] = useState(300);
@@ -103,9 +111,19 @@ export const ImageEditor = () => {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, img.width, img.height);
-      if (!getValues('watermark')) return;
+      let watermarkSrc = getValues('watermark');
+      if (!watermarkSrc) return;
+      const watermarkColor = getValues('watermarkColor');
+      if(getValues('watermarkEnableCustomColor') && watermarkColor) {
+        const watermarkParts = watermarkSrc.split('data:image/svg+xml;base64,');
+        if(watermarkParts.length > 1) {
+          const watermarkBase64 = watermarkParts[1];
+          const decodedString = atob(watermarkBase64).replace(/#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}/gi, watermarkColor).replace('currentColor', watermarkColor);
+          watermarkSrc = 'data:image/svg+xml;base64,' + btoa(decodedString);
+        }
+      }
       const watermarkImg = new Image();
-      watermarkImg.src = getValues('watermark');
+      watermarkImg.src = watermarkSrc
       watermarkImg.onload = () => {
         drawWatermark(watermarkImg, img, ctx);
       }
@@ -122,9 +140,11 @@ export const ImageEditor = () => {
   const watermarkField = register("watermark", { required: true });
   const watermarkCornerField = register("watermarkCorner", { required: true, validate: value => ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(value) });
   const watermarkOpacityField = register("watermarkOpacity", { required: true, validate: value => value >= 0 && value <= 100 });
-  const watermarkScaleField = register("watermarkScale", { required: true, validate: value => value >= 0 && value <= 200 });
+  const watermarkScaleField = register("watermarkScale", { required: true, validate: value => value >= 0 && value <= 400 });
   const watermarkXOffsetField = register("watermarkXOffset", { required: true, validate: value => value >= 0 });
   const watermarkYOffsetField = register("watermarkYOffset", { required: true, validate: value => value >= 0 });
+  const watermarkColorField = register("watermarkColor", { required: true });
+  const watermarkEnableCustomColorField = register("watermarkEnableCustomColor", { required: true });
 
   const saveUserSettings = () => {
     const settings = {
@@ -133,6 +153,8 @@ export const ImageEditor = () => {
       watermarkYOffset: getValues('watermarkYOffset'),
       watermarkScale: getValues('watermarkScale'),
       watermarkOpacity: getValues('watermarkOpacity'),
+      watermarkColor: getValues('watermarkColor'),
+      watermarkEnableCustomColor: getValues('watermarkEnableCustomColor'),
     }
 
     saveSettings(settings);
@@ -157,7 +179,16 @@ export const ImageEditor = () => {
       <div className="border border-black border-dashed overflow-x-auto w-full">
         <canvas width={canvasWidth} height={canvasHeight} ref={canvasRef} className="m-auto" />
       </div>
-      <ImageSettings setDefaultSettings={setDefaultSettings} getValues={getValues} watermarkCornerField={watermarkCornerField} watermarkOpacityField={watermarkOpacityField} watermarkScaleField={watermarkScaleField} watermarkXOffsetField={watermarkXOffsetField} watermarkYOffsetField={watermarkYOffsetField} />
+      <ImageSettings
+        setDefaultSettings={setDefaultSettings}
+        getValues={getValues}
+        watermarkCornerField={watermarkCornerField}
+        watermarkOpacityField={watermarkOpacityField}
+        watermarkScaleField={watermarkScaleField}
+        watermarkXOffsetField={watermarkXOffsetField}
+        watermarkYOffsetField={watermarkYOffsetField}
+        watermarkEnableCustomColorField={watermarkEnableCustomColorField}
+        setWatermarkColor={setWatermarkColor} />
       <button type="button" onClick={downloadImage} className="py-4 px-16 bg-indigo-500 text-white text-sm font-semibold rounded-md shadow focus:outline-none">Скачать</button>
     </form>
   )
