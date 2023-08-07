@@ -45,53 +45,58 @@ export const ImageEditor = () => {
 
   const [canvasWidth, setCanvasWidth] = useState(300);
   const [canvasHeight, setCanvasHeight] = useState(300);
+  const [demoCanvasWidth, setDemoCanvasWidth] = useState(300);
+  const [demoCanvasHeight, setDemoCanvasHeight] = useState(300);
   const [imageFileName, setImageFileName] = useState('image');
   const watchAllFields = watch();
 
-  const canvasRef = useCanvas(([canvas, ctx]) => { });
+  const canvasRef = useCanvas(([]) => { });
+  const demoCanvasRef = useCanvas(([]) => { });
 
-  const drawWatermark = useCallback((watermarkImg, img, ctx) => {
+  const drawWatermark = useCallback((watermarkImg, ctx, canvas) => {
     const watermarkScale = getValues('watermarkScale') / 100;
     const watermarkOpacity = getValues('watermarkOpacity') / 100;
     const watermarkXOffset = getValues('watermarkXOffset');
     const watermarkYOffset = getValues('watermarkYOffset');
     const watermarkCorner = getValues('watermarkCorner');
     ctx.globalAlpha = watermarkOpacity;
+    const width = canvas.width * watermarkScale;
+    const height = watermarkImg.height * width / watermarkImg.width;
     switch (watermarkCorner) {
       case 'top-left': {
         ctx.drawImage(
           watermarkImg,
           watermarkXOffset,
           watermarkYOffset,
-          watermarkImg.width * watermarkScale,
-          watermarkImg.height * watermarkScale);
+          width,
+          height);
         break;
       }
       case 'top-right': {
         ctx.drawImage(
           watermarkImg,
-          img.width - watermarkImg.width * watermarkScale - watermarkXOffset,
+          canvas.width - width - watermarkXOffset,
           watermarkYOffset,
-          watermarkImg.width * watermarkScale,
-          watermarkImg.height * watermarkScale);
+          width,
+          height);
         break;
       }
       case 'bottom-left': {
         ctx.drawImage(
           watermarkImg,
           watermarkXOffset,
-          img.height - watermarkImg.height * watermarkScale - watermarkYOffset,
-          watermarkImg.width * watermarkScale,
-          watermarkImg.height * watermarkScale);
+          canvas.height - height - watermarkYOffset,
+          width,
+          height);
         break;
       }
       case 'bottom-right': {
         ctx.drawImage(
           watermarkImg,
-          img.width - watermarkImg.width * watermarkScale - watermarkXOffset,
-          img.height - watermarkImg.height * watermarkScale - watermarkYOffset,
-          watermarkImg.width * watermarkScale,
-          watermarkImg.height * watermarkScale);
+          canvas.width - width - watermarkXOffset,
+          canvas.height - height - watermarkYOffset,
+          width,
+          height);
         break;
       }
       default: {
@@ -111,6 +116,13 @@ export const ImageEditor = () => {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, img.width, img.height);
+      const demoWidth = document.getElementById('demoCanvasWrapper').clientWidth;
+      const demoHeight = img.height * demoWidth / img.width;
+      setDemoCanvasWidth(demoWidth);
+      setDemoCanvasHeight(demoHeight);
+      const demoCanvas = demoCanvasRef.current;
+      const demoCtx = demoCanvas.getContext('2d');
+      demoCtx.drawImage(img, 0, 0, demoWidth, demoHeight);
       let watermarkSrc = getValues('watermark');
       if (!watermarkSrc) return;
       const watermarkColor = getValues('watermarkColor');
@@ -125,7 +137,8 @@ export const ImageEditor = () => {
       const watermarkImg = new Image();
       watermarkImg.src = watermarkSrc
       watermarkImg.onload = () => {
-        drawWatermark(watermarkImg, img, ctx);
+        drawWatermark(watermarkImg, ctx, canvas);
+        drawWatermark(watermarkImg, demoCtx, demoCanvas);
       }
     }
   }, [getValues, canvasRef, drawWatermark]);
@@ -140,7 +153,7 @@ export const ImageEditor = () => {
   const watermarkField = register("watermark", { required: true });
   const watermarkCornerField = register("watermarkCorner", { required: true, validate: value => ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(value) });
   const watermarkOpacityField = register("watermarkOpacity", { required: true, validate: value => value >= 0 && value <= 100 });
-  const watermarkScaleField = register("watermarkScale", { required: true, validate: value => value >= 0 && value <= 400 });
+  const watermarkScaleField = register("watermarkScale", { required: true, validate: value => value >= 0 && value <= 100 });
   const watermarkXOffsetField = register("watermarkXOffset", { required: true, validate: value => value >= 0 });
   const watermarkYOffsetField = register("watermarkYOffset", { required: true, validate: value => value >= 0 });
   const watermarkColorField = register("watermarkColor", { required: true });
@@ -175,9 +188,10 @@ export const ImageEditor = () => {
   return (
     <form className="flex flex-col items-center my-8">
       <UploadButtons imageField={imageField} watermarkField={watermarkField} setImage={(value, fileName) => { setValue('image', value); setImageFileName(fileName); }} setWatermark={value => setValue('watermark', value)} />
-      <label className="block font-bold mb-2">{'Предпросмотр. Есть горизонтальная прокрутка'}</label>
-      <div className="border border-black border-dashed overflow-x-auto w-full">
-        <canvas width={canvasWidth} height={canvasHeight} ref={canvasRef} className="m-auto" />
+      <label className="block font-bold mb-2">{'Предпросмотр'}</label>
+      <canvas hidden width={canvasWidth} height={canvasHeight} ref={canvasRef} className="m-auto" />
+      <div className="border border-black border-dashed overflow-x-auto w-full" id='demoCanvasWrapper'>
+        <canvas width={demoCanvasWidth} height={demoCanvasHeight} ref={demoCanvasRef} />
       </div>
       <ImageSettings
         setDefaultSettings={setDefaultSettings}
