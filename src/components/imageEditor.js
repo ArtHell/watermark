@@ -1,14 +1,15 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ImageSettings } from "./imageSettings";
 import { UploadButtons } from "./uploadButtons";
 import { useForm } from "react-hook-form";
 import { useCanvas } from "../hooks/useCanvas";
-import { debounce, get, set } from "lodash";
+import { debounce } from "lodash";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { useMemo } from "react";
 
 export const ImageEditor = () => {
   const [userSettings, saveSettings] = useUserSettings();
+  const [resultUrl, setResultUrl] = useState('');
 
   const defaultSettings = useMemo(() => ({
     image: '',
@@ -22,7 +23,7 @@ export const ImageEditor = () => {
     watermarkEnableCustomColor: true,
   }), []);
 
-  const { register, setValue, handleSubmit, getValues, watch } = useForm({
+  const { register, setValue, getValues, watch } = useForm({
     defaultValues: {
       ...defaultSettings,
       ...userSettings,
@@ -141,6 +142,7 @@ export const ImageEditor = () => {
       watermarkImg.onload = () => {
         drawWatermark(watermarkImg, ctx, canvas);
         drawWatermark(watermarkImg, demoCtx, demoCanvas);
+        setResultUrl(canvas.toDataURL("image/png"));
       }
     }
   }, [getValues, canvasRef, drawWatermark]);
@@ -175,18 +177,6 @@ export const ImageEditor = () => {
     saveSettings(settings);
   }
 
-  const downloadImage = () => {
-    saveUserSettings();
-    const canvas = canvasRef.current;
-    var url = canvas.toDataURL("image/png");
-    var link = document.createElement('a');
-    link.download = `${imageFileName}_wm.png`;
-    link.href = url;
-    link.click();
-  }
-
-  handleSubmit(downloadImage);
-
   return (
     <form className="flex flex-col items-center my-8">
       <UploadButtons imageField={imageField} watermarkField={watermarkField} setImage={(value, fileName) => { setValue('image', value); setImageFileName(fileName); }} setWatermark={value => setValue('watermark', value)} />
@@ -205,7 +195,7 @@ export const ImageEditor = () => {
         watermarkYOffsetField={watermarkYOffsetField}
         watermarkEnableCustomColorField={watermarkEnableCustomColorField}
         setWatermarkColor={setWatermarkColor} />
-      <button type="button" onClick={downloadImage} className="py-4 px-16 bg-indigo-500 text-white text-sm font-semibold rounded-md shadow focus:outline-none">Скачать</button>
+      <a href={resultUrl} download={`${imageFileName}_wm.png`} className="block mb-2 py-4 px-16 bg-indigo-500 text-white text-sm font-semibold rounded-md shadow focus:outline-none">{'Скачать водяной знак'}</a>
     </form>
   )
 }
