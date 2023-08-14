@@ -9,7 +9,6 @@ import { useMemo } from "react";
 
 export const ImageEditor = () => {
   const [userSettings, saveSettings] = useUserSettings();
-  const [resultUrl, setResultUrl] = useState('');
 
   const defaultSettings = useMemo(() => ({
     image: '',
@@ -142,10 +141,9 @@ export const ImageEditor = () => {
       watermarkImg.onload = () => {
         drawWatermark(watermarkImg, ctx, canvas);
         drawWatermark(watermarkImg, demoCtx, demoCanvas);
-        setResultUrl(canvas.toDataURL("image/png"));
       }
     }
-  }, [getValues, canvasRef, drawWatermark]);
+  }, [getValues, canvasRef, drawWatermark, demoCanvasRef]);
 
   const debouncedDraw = useCallback(debounce(drawImage, 300, { leading: false }), []);
 
@@ -177,6 +175,28 @@ export const ImageEditor = () => {
     saveSettings(settings);
   }
 
+  const onDownload = () => {
+    saveUserSettings();
+    const canvas = canvasRef.current;
+
+      let canvasImage = canvas.toDataURL('image/png');
+      
+      // this can be used to download any image from webpage to local disk
+      let xhr = new XMLHttpRequest();
+      xhr.responseType = 'blob';
+      xhr.onload = function () {
+          let a = document.createElement('a');
+          a.href = window.URL.createObjectURL(xhr.response);
+          a.download = `${imageFileName}_wm.png`;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        };
+        xhr.open('GET', canvasImage); // This is to download the canvas Image
+        xhr.send();
+  }
+
   return (
     <form className="flex flex-col items-center my-8">
       <UploadButtons imageField={imageField} watermarkField={watermarkField} setImage={(value, fileName) => { setValue('image', value); setImageFileName(fileName); }} setWatermark={value => setValue('watermark', value)} />
@@ -195,7 +215,7 @@ export const ImageEditor = () => {
         watermarkYOffsetField={watermarkYOffsetField}
         watermarkEnableCustomColorField={watermarkEnableCustomColorField}
         setWatermarkColor={setWatermarkColor} />
-      <a href={resultUrl} download={`${imageFileName}_wm.png`} className="block mb-2 py-4 px-16 bg-indigo-500 text-white text-sm font-semibold rounded-md shadow focus:outline-none">{'Скачать водяной знак'}</a>
+      <button onClick={onDownload} type="button" className="block mb-2 py-4 px-16 bg-indigo-500 text-white text-sm font-semibold rounded-md shadow focus:outline-none">{'Скачать результат'}</button>
     </form>
   )
 }
