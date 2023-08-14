@@ -50,8 +50,9 @@ export const ImageEditor = () => {
   const [imageFileName, setImageFileName] = useState('image');
   const watchAllFields = watch();
 
+  const [resultUrl, setResultUrl] = useState('');
+
   const canvasRef = useCanvas(([]) => { });
-  const demoCanvasRef = useCanvas(([]) => { });
 
   const drawWatermark = useCallback((watermarkImg, ctx, canvas) => {
     const watermarkScale = getValues('watermarkScale') / 100;
@@ -122,9 +123,6 @@ export const ImageEditor = () => {
       const demoHeight = img.height * demoWidth / img.width;
       setDemoCanvasWidth(demoWidth);
       setDemoCanvasHeight(demoHeight);
-      const demoCanvas = demoCanvasRef.current;
-      const demoCtx = demoCanvas.getContext('2d');
-      demoCtx.drawImage(img, 0, 0, demoWidth, demoHeight);
       let watermarkSrc = getValues('watermark');
       if (!watermarkSrc) return;
       const watermarkColor = getValues('watermarkColor');
@@ -140,10 +138,10 @@ export const ImageEditor = () => {
       watermarkImg.src = watermarkSrc
       watermarkImg.onload = () => {
         drawWatermark(watermarkImg, ctx, canvas);
-        drawWatermark(watermarkImg, demoCtx, demoCanvas);
+        setResultUrl(canvas.toDataURL('image/png'));
       }
     }
-  }, [getValues, canvasRef, drawWatermark, demoCanvasRef]);
+  }, [getValues, canvasRef, drawWatermark]);
 
   const debouncedDraw = useCallback(debounce(drawImage, 300, { leading: false }), []);
 
@@ -203,7 +201,7 @@ export const ImageEditor = () => {
       <label className="block font-bold mb-2">{'Предпросмотр'}</label>
       <canvas hidden width={canvasWidth} height={canvasHeight} ref={canvasRef} className="m-auto" />
       <div className="rounded shadow overflow-x-auto w-full max-w-lg" id='demoCanvasWrapper'>
-        <canvas width={demoCanvasWidth} height={demoCanvasHeight} ref={demoCanvasRef} />
+        <img src={resultUrl} width={demoCanvasWidth} height={demoCanvasHeight} alt={`${imageFileName}_wm.png`} />
       </div>
       <ImageSettings
         setDefaultSettings={setDefaultSettings}
