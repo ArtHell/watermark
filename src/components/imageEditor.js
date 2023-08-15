@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { ImageSettings } from "./imageSettings";
 import { UploadButtons } from "./uploadButtons";
 import { useForm } from "react-hook-form";
 import { useCanvas } from "../hooks/useCanvas";
-import { debounce } from "lodash";
+import { debounce, get, set } from "lodash";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { useMemo } from "react";
 
@@ -22,7 +22,7 @@ export const ImageEditor = () => {
     watermarkEnableCustomColor: true,
   }), []);
 
-  const { register, setValue, getValues, watch } = useForm({
+  const { register, setValue, handleSubmit, getValues, watch } = useForm({
     defaultValues: {
       ...defaultSettings,
       ...userSettings,
@@ -50,9 +50,8 @@ export const ImageEditor = () => {
   const [imageFileName, setImageFileName] = useState('image');
   const watchAllFields = watch();
 
-  const [resultUrl, setResultUrl] = useState('');
-
   const canvasRef = useCanvas(([]) => { });
+  const demoCanvasRef = useCanvas(([]) => { });
 
   const drawWatermark = useCallback((watermarkImg, ctx, canvas) => {
     const watermarkScale = getValues('watermarkScale') / 100;
@@ -117,12 +116,15 @@ export const ImageEditor = () => {
       setCanvasWidth(img.width);
       setCanvasHeight(img.height);
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { alpha: false });
       ctx.drawImage(img, 0, 0, img.width, img.height);
       const demoWidth = document.getElementById('demoCanvasWrapper').clientWidth;
       const demoHeight = img.height * demoWidth / img.width;
       setDemoCanvasWidth(demoWidth);
       setDemoCanvasHeight(demoHeight);
+      const demoCanvas = demoCanvasRef.current;
+      const demoCtx = demoCanvas.getContext('2d', { alpha: false });
+      demoCtx.drawImage(img, 0, 0, demoWidth, demoHeight);
       let watermarkSrc = getValues('watermark');
       if (!watermarkSrc) return;
       const watermarkColor = getValues('watermarkColor');
@@ -138,7 +140,7 @@ export const ImageEditor = () => {
       watermarkImg.src = watermarkSrc
       watermarkImg.onload = () => {
         drawWatermark(watermarkImg, ctx, canvas);
-        setResultUrl(canvas.toDataURL('image/png'));
+        drawWatermark(watermarkImg, demoCtx, demoCanvas);
       }
     }
   }, [getValues, canvasRef, drawWatermark]);
@@ -173,27 +175,18 @@ export const ImageEditor = () => {
     saveSettings(settings);
   }
 
-  const onDownload = () => {
+  const downloadImage = () => {
     saveUserSettings();
-    const canvas = canvasRef.current;
-
-      let canvasImage = canvas.toDataURL('image/png');
-      
-      // this can be used to download any image from webpage to local disk
-      let xhr = new XMLHttpRequest();
-      xhr.responseType = 'blob';
-      xhr.onload = function () {
-          let a = document.createElement('a');
-          a.href = window.URL.createObjectURL(xhr.response);
-          a.download = `${imageFileName}_wm.png`;
-          a.style.display = 'none';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        };
-        xhr.open('GET', canvasImage); // This is to download the canvas Image
-        xhr.send();
+    const canvas = canvasRef.current;canvas.toBlob((blob) => {
+      var link = document.createElement('a');
+      link.download = `${imageFileName}_wm.png`;
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    }, "image/png");
+    
   }
+
+  handleSubmit(downloadImage);
 
   return (
     <form className="flex flex-col items-center my-8">
@@ -201,7 +194,7 @@ export const ImageEditor = () => {
       <label className="block font-bold mb-2">{'Предпросмотр'}</label>
       <canvas hidden width={canvasWidth} height={canvasHeight} ref={canvasRef} className="m-auto" />
       <div className="rounded shadow overflow-x-auto w-full max-w-lg" id='demoCanvasWrapper'>
-        <img src={resultUrl} width={demoCanvasWidth} height={demoCanvasHeight} alt={`${imageFileName}_wm.png`} />
+        <canvas width={demoCanvasWidth} height={demoCanvasHeight} ref={demoCanvasRef} />
       </div>
       <ImageSettings
         setDefaultSettings={setDefaultSettings}
@@ -213,7 +206,7 @@ export const ImageEditor = () => {
         watermarkYOffsetField={watermarkYOffsetField}
         watermarkEnableCustomColorField={watermarkEnableCustomColorField}
         setWatermarkColor={setWatermarkColor} />
-      <button onClick={onDownload} type="button" className="block mb-2 py-4 px-16 bg-indigo-500 text-white text-sm font-semibold rounded-md shadow focus:outline-none">{'Скачать результат'}</button>
+      <button type="button" onClick={downloadImage} className="py-4 px-16 bg-indigo-500 text-white text-sm font-semibold rounded-md shadow focus:outline-none">Скачать</button>
     </form>
   )
 }
