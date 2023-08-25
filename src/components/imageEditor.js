@@ -1,11 +1,11 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ImageSettings } from "./imageSettings";
 import { UploadButtons } from "./uploadButtons";
 import { useForm } from "react-hook-form";
-import { useCanvas } from "../hooks/useCanvas";
-import { debounce, get, set } from "lodash";
+import { debounce } from "lodash";
 import { useUserSettings } from "../hooks/useUserSettings";
 import { useMemo } from "react";
+import { fileSave } from "browser-fs-access";
 
 export const ImageEditor = () => {
   const [userSettings, saveSettings] = useUserSettings();
@@ -22,7 +22,7 @@ export const ImageEditor = () => {
     watermarkEnableCustomColor: true,
   }), []);
 
-  const { register, setValue, handleSubmit, getValues, watch } = useForm({
+  const { register, setValue, getValues, watch } = useForm({
     defaultValues: {
       ...defaultSettings,
       ...userSettings,
@@ -39,9 +39,34 @@ export const ImageEditor = () => {
     setValue('watermarkEnableCustomColor', defaultSettings.watermarkEnableCustomColor);
   }, [defaultSettings, setValue]);
 
+  const [isSvgWatermark, setIsSvgWatermark] = useState(false);
+
+  const applyWatermarkColor = useCallback(async () => {
+    const color = getValues('watermarkColor');
+    if (isSvgWatermark && getValues('watermarkEnableCustomColor') && color) {
+      const watermarkSrc = getValues('watermark');
+      const blob = await fetch(watermarkSrc).then(r => r.blob());
+      const svg = await blob.text();
+      const coloredSvg = svg.replace(/#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}/gi, color).replace('currentColor', color);
+      const coloredSvgBlob = new Blob([coloredSvg], { type: "image/svg+xml" });
+      const coloredSvgUrl = URL.createObjectURL(coloredSvgBlob);
+      setValue('watermark', coloredSvgUrl);
+      console.log('coloredSvgUrl', coloredSvgUrl);
+      URL.revokeObjectURL(watermarkSrc);
+    }
+  }, [getValues, isSvgWatermark, setValue]);
+
+  useEffect(
+    () => {
+      applyWatermarkColor();
+    },
+    [isSvgWatermark, applyWatermarkColor]
+  );
+
   const setWatermarkColor = useCallback((color) => {
     setValue('watermarkColor', color);
-  }, [setValue]);
+    applyWatermarkColor();
+  }, [setValue, applyWatermarkColor]);
 
   const [canvasWidth, setCanvasWidth] = useState(300);
   const [canvasHeight, setCanvasHeight] = useState(300);
@@ -50,8 +75,8 @@ export const ImageEditor = () => {
   const [imageFileName, setImageFileName] = useState('image');
   const watchAllFields = watch();
 
-  const canvasRef = useCanvas(([]) => { });
-  const demoCanvasRef = useCanvas(([]) => { });
+  const canvasRef = useRef(null);
+  const demoCanvasRef = useRef(null);
 
   const drawWatermark = useCallback((watermarkImg, ctx, canvas) => {
     const watermarkScale = getValues('watermarkScale') / 100;
@@ -111,7 +136,8 @@ export const ImageEditor = () => {
   const drawImage = useCallback(() => {
     if (!getValues('image')) return;
     const img = new Image();
-    img.src = getValues('image');
+    const imageSrc = getValues('image');
+    img.src = imageSrc;
     img.onload = () => {
       setCanvasWidth(img.width);
       setCanvasHeight(img.height);
@@ -125,19 +151,12 @@ export const ImageEditor = () => {
       const demoCanvas = demoCanvasRef.current;
       const demoCtx = demoCanvas.getContext('2d', { alpha: false });
       demoCtx.drawImage(img, 0, 0, demoWidth, demoHeight);
+
       let watermarkSrc = getValues('watermark');
       if (!watermarkSrc) return;
-      const watermarkColor = getValues('watermarkColor');
-      if(getValues('watermarkEnableCustomColor') && watermarkColor) {
-        const watermarkParts = watermarkSrc.split('data:image/svg+xml;base64,');
-        if(watermarkParts.length > 1) {
-          const watermarkBase64 = watermarkParts[1];
-          const decodedString = atob(watermarkBase64).replace(/#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3}/gi, watermarkColor).replace('currentColor', watermarkColor);
-          watermarkSrc = 'data:image/svg+xml;base64,' + btoa(decodedString);
-        }
-      }
       const watermarkImg = new Image();
-      watermarkImg.src = watermarkSrc
+      watermarkImg.src = watermarkSrc;
+      console.log('watermarkImg.src', watermarkImg.src);
       watermarkImg.onload = () => {
         drawWatermark(watermarkImg, ctx, canvas);
         drawWatermark(watermarkImg, demoCtx, demoCanvas);
@@ -158,7 +177,7 @@ export const ImageEditor = () => {
   const watermarkScaleField = register("watermarkScale", { required: true, validate: value => value >= 0 && value <= 100 });
   const watermarkXOffsetField = register("watermarkXOffset", { required: true, validate: value => value >= 0 });
   const watermarkYOffsetField = register("watermarkYOffset", { required: true, validate: value => value >= 0 });
-  const watermarkColorField = register("watermarkColor", { required: true });
+  register("watermarkColor", { required: true });
   const watermarkEnableCustomColorField = register("watermarkEnableCustomColor", { required: true });
 
   const saveUserSettings = () => {
@@ -177,20 +196,34 @@ export const ImageEditor = () => {
 
   const downloadImage = () => {
     saveUserSettings();
-    const canvas = canvasRef.current;canvas.toBlob((blob) => {
-      var link = document.createElement('a');
-      link.download = `${imageFileName}_wm.png`;
-      link.href = URL.createObjectURL(blob);
-      link.click();
+    const canvas = canvasRef.current;
+    canvas.toBlob((blob) => {
+      fileSave(blob, {
+        fileName: `${imageFileName}_wm.png`,
+        extensions: ['.png'],
+      }).catch((err) => {
+        console.log(err);
+      });
     }, "image/png");
-    
   }
-
-  handleSubmit(downloadImage);
 
   return (
     <form className="flex flex-col items-center my-8">
-      <UploadButtons imageField={imageField} watermarkField={watermarkField} setImage={(value, fileName) => { setValue('image', value); setImageFileName(fileName); }} setWatermark={value => setValue('watermark', value)} />
+      <UploadButtons
+        imageField={imageField}
+        watermarkField={watermarkField}
+        setImage={
+          (value, fileName) => {
+            URL.revokeObjectURL(getValues('image'));
+            setValue('image', value);
+            setImageFileName(fileName);
+          }}
+        setWatermark={
+          (value, fileName, extension) => {
+            URL.revokeObjectURL(getValues('watermark'));
+            setValue('watermark', value);
+            setIsSvgWatermark(extension.toLowerCase() === 'svg');
+          }} />
       <label className="block font-bold mb-2">{'Предпросмотр'}</label>
       <canvas hidden width={canvasWidth} height={canvasHeight} ref={canvasRef} className="m-auto" />
       <div className="rounded shadow overflow-x-auto w-full max-w-lg" id='demoCanvasWrapper'>
